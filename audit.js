@@ -44,8 +44,6 @@ async function getPages(page,pageList,addr,pageBefore,browserPage)
 		// {
 		// 	await browserPage.waitFor(1000);
 		// }
-		console.log('start');
-		console.log(j);
 		var tempHref = await browserPage.evaluate((j) => {
 			x = document.querySelectorAll('a')[j];
 			if (x != null)
@@ -56,7 +54,6 @@ async function getPages(page,pageList,addr,pageBefore,browserPage)
 		},j);
 		// var tempAnchors = await browserPage.$$('a');
 		// var tempHref = await (tempAnchors[j]).attribute('href');
-		console.log('finish');
 		//check if the link is in the same domain as the initial address
 		tempHref = tempHref.replace("#","");
 		var newPage = tempHref.replace(addr,"");
