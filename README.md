@@ -6,9 +6,9 @@ Auditing script for producing desktop and mobile screenshots, markup validator s
 2. Clone this Git repository into a new directory
 
 ## Run Audit Tool
-To run the auditing tool, all you need is the __URL__ of the home page of the website/staging site
+To run the auditing tool, all you need is the __URL__ of the home page of the website/staging site and a __Directory Name__ which will store the results of the audit. The following should then be typed into the terminal:
 
-```node audit.js --url <URL> ```
+```node audit.js --url <URL> --dir <Directory Name>```
 
 ## Results
 Results of the auditing tool can be found in the four directories of the installation directory.
