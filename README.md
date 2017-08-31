@@ -12,3 +12,6 @@ To run the auditing tool, all you need is the __URL__ of the home page of the we
 
 ## Results
 Results of the auditing tool can be found in the four directories of the installation directory.
+
+### Lighthouse Reports
+The reports found in the __/lighthouse__ folder can be viewed as html using the following address https://googlechrome.github.io/lighthouse/viewer/
