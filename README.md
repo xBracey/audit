@@ -6,7 +6,7 @@ Auditing script for producing desktop and mobile screenshots, markup validator s
 2. Clone this Git repository into a new directory
 
 ## Installation
-After cloning the git repo, execute the following lines on the command line:
+After cloning the git repo, execute the following lines on the command line in the root directory:
 1. ```npm init -y```
 2. ```npm install puppeteer lighthouse```
 
