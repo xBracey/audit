@@ -120,7 +120,18 @@ async function parallelLighthouseReports(allPages,dir,url,j,parallelNum)
 }
 function createLighthouseReports(allPages,dir,url)
 {
-	var parallelNum = 4;
+	if(process.argv.indexOf("--parallel") != -1)
+	{
+		var parallelNum = parseInt(process.argv[process.argv.indexOf("--parallel") + 1]);
+		if(!(typeof parallelNum==='number' && (parallelNum%1)===0)) {
+    		// parallelNum is not an integer
+    		parallelNum = 1;
+		}
+	}
+	else
+	{
+		var parallelNum = 1;
+	}
 	for (var j=0;j<parallelNum;j++)
 	{
 		parallelLighthouseReports(allPages,dir,url,j,parallelNum).catch(console.error.bind(console));

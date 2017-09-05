@@ -15,6 +15,10 @@ To run the auditing tool, all you need is the __URL__ of the home page of the we
 
 ```node audit.js --url <URL> --dir <Directory Name>```
 
+### Parallel Lighthouse Instances
+Another feature of the auditing tool is that in create many parallel lighthouse instances whilst auditing. To enable this use the following tag:
+```--parallel <numOfInstances>```
+
 ## Results
 Results of the auditing tool can be found in the four directories of the installation directory.
 
