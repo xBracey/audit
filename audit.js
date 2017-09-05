@@ -9,7 +9,7 @@ async function bfsGetPages(firstPage,url)
 {
 	var browser = await puppeteer.launch();
 	var browserPage = await browser.newPage();
-	pageList = [];
+	var pageList = [];
 	// linkList=[];
 	var pageQueue = new queueClass.queue();
 	pageQueue.enqueue(firstPage);
@@ -21,7 +21,7 @@ async function bfsGetPages(firstPage,url)
 		var numOfLinks = await browserPage.evaluate(() => {
 			return document.querySelectorAll('a').length;
 		});
-		for (i=0;i<numOfLinks;i++)
+		for (var i=0;i<numOfLinks;i++)
 		{
 			var tempHref = await browserPage.evaluate((i) => {
 				return document.querySelectorAll('a')[i].href;
@@ -58,7 +58,7 @@ async function parallelScreenshots(listOfPages,dir,url,j,parallelNum)
 			if (listOfPages[arrayNum].slice(-4) !== '.pdf')
 			{
 				await page.setViewport({width: 1920, height: 1080});
-				pageName = listOfPages[arrayNum].replace(/\//g,'_');
+				var pageName = listOfPages[arrayNum].replace(/\//g,'_');
 				pageName = pageName.replace(/#/g,'');
 				await page.goto(url+listOfPages[arrayNum]);
 				await page.screenshot({path: dir+'/images/'+pageName+'.png', fullPage: true});
@@ -81,7 +81,7 @@ async function parallelScreenshots(listOfPages,dir,url,j,parallelNum)
 
 function createScreenshots(listOfPages,dir,url)
 {
-	parallelNum = 8;
+	var parallelNum = 8;
 	for (var j=0;j<parallelNum;j++)
 	{
 		parallelScreenshots(listOfPages,dir,url,j,parallelNum).catch(console.error.bind(console));
