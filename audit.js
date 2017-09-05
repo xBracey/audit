@@ -96,6 +96,16 @@ function launchChromeAndRunLighthouse(url, flags = {}, config = null) {
   });
 }
 
+function saveLightHouseReport(arrayNum,dir,allPages,results)
+{
+	var pageName = allPages[arrayNum].replace(/\//g,'_');	
+	pageName = pageName.replace(/#/g,'');
+	fs.writeFile(dir+'/lighthouse/'+pageName+'_report.JSON', JSON.stringify(results), (err) => {
+	  	if (err) throw err;
+	  	//console.log('The file has been saved!');
+	});
+}
+
 async function parallelLighthouseReports(allPages,dir,url,j,parallelNum)
 {
 	var pagesLength = allPages.length;
@@ -104,20 +114,13 @@ async function parallelLighthouseReports(allPages,dir,url,j,parallelNum)
 		var arrayNum = (i*parallelNum)+j;
 		if (arrayNum < pagesLength)
 		{
-			await launchChromeAndRunLighthouse(url+allPages[arrayNum], flags).then(results => {
-				var pageName = allPages[arrayNum].replace(/\//g,'_');	
-				pageName = pageName.replace(/#/g,'');
-				fs.writeFile(dir+'/lighthouse/'+pageName+'_report.JSON', JSON.stringify(results), (err) => {
-				  	if (err) throw err;
-				  	//console.log('The file has been saved!');
-				});
-			});
+			await launchChromeAndRunLighthouse(url+allPages[arrayNum], flags).then(results => saveLightHouseReport(arrayNum,dir,allPages,results));
 		}
 	}
 }
 function createLighthouseReports(allPages,dir,url)
 {
-	parallelNum = 4;
+	var parallelNum = 4;
 	for (var j=0;j<parallelNum;j++)
 	{
 		parallelLighthouseReports(allPages,dir,url,j,parallelNum).catch(console.error.bind(console));
