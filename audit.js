@@ -3,108 +3,45 @@ const lighthouse = require('lighthouse');
 const chromeLauncher = require('lighthouse/chrome-launcher');
 const fs = require('fs');
 const flags = {};
+const queueClass = require('./queue');
 
-async function getPagesInitial(url,dir){
+async function bfsGetPages(firstPage,url)
+{
 	var browser = await puppeteer.launch();
-	var page = await browser.newPage();
-	page.setViewport({width: 1920, height: 1080});
-
-	if (!fs.existsSync(dir)){
-    	fs.mkdirSync(dir);
-    	fs.mkdirSync(dir+'/images');
-    	fs.mkdirSync(dir+'/mobileImages');
-    	fs.mkdirSync(dir+'/lighthouse');
-    	fs.mkdirSync(dir+'/markupValidator');
+	var browserPage = await browser.newPage();
+	pageList = [];
+	// linkList=[];
+	var pageQueue = new queueClass.queue();
+	pageQueue.enqueue(firstPage);
+	pageList.push(firstPage);
+	while (!pageQueue.isEmpty())
+	{
+		var page = pageQueue.dequeue();
+		await browserPage.goto(url+page);
+		var numOfLinks = await browserPage.evaluate(() => {
+			return document.querySelectorAll('a').length;
+		});
+		for (i=0;i<numOfLinks;i++)
+		{
+			var tempHref = await browserPage.evaluate((i) => {
+				return document.querySelectorAll('a')[i].href;
+			},i);
+			// if (tempHref.indexOf("staging-cop-web-elb") !== -1)
+			// {
+			// 	linkList.push({"page": page, "href":tempHref});
+			// }
+			tempHref = tempHref.split("#")[0];
+			var newPage = tempHref.replace(url,"");
+			if ((tempHref!==newPage) && (pageList.indexOf(newPage) === -1))
+			{
+				pageQueue.enqueue(newPage);
+				pageList.push(newPage);
+			}
+		}
 	}
-
-	await page.goto(url);
-	var pageList =[];
-	pageList = await getPages("/",pageList,url,"/",page);
+	// console.log(linkList);
 	browser.close();
 	return pageList;
-}
-
-async function getHref(j,browserPage)
-{
-	var tempHref = await browserPage.evaluate((j) => {
-		var x = document.querySelectorAll('a')[j];
-		if (x != undefined)
-		{
-			if (x != undefined)
-			{
-				return x.href;
-			}
-			else {return 'undefined';}
-		}
-		else {return 'undefined';}
-	},j);
-	return tempHref;
-}
-async function getPages(page,pageList,addr,pageBefore,browserPage)
-{
-	// if (page.indexOf("insights") !== -1)
-	// {
-	// 	await browserPage.waitFor(1000);
-	// }
-	pageList.push(page);
-	var numOfLinks = await browserPage.evaluate(() => {
-		return document.querySelectorAll('a').length;
-	});
-	for (var j=0; j < numOfLinks; j++) {
-		// if ((page.indexOf("insights/page") !== -1) || (page===("/insights")))
-		// {
-		// 	await browserPage.waitFor(1000);
-		// }
-		try {
-			var tempHref = await getHref(j,browserPage);
-		}
-		catch(e)
-		{
-			console.log("Catch1");
-			try {
-				var tempHref = await getHref(j,browserPage);
-			}
-			catch(e)
-			{
-				console.log("Catch2");
-				try {
-					var tempHref = await getHref(j,browserPage);
-				}
-				catch(e)
-				{
-					console.log("Catch3");
-					try {
-						var tempHref = await getHref(j,browserPage);
-					}
-					catch(e)
-					{
-						throw "Get HREF of element failed";
-					}
-				}
-			}
-		}
-		//check if the link is in the same domain as the initial address
-		tempHref = tempHref.split("#")[0];
-		var newPage = tempHref.replace(addr,"");
-		if ((tempHref!==newPage) && (pageList.indexOf(newPage) === -1))
-		{
-			await browserPage.evaluate((j) => {
-				x = document.querySelectorAll('a')[j];
-				x.click()
-			},j);
-			pageList = await getPages(newPage,pageList,addr,page,browserPage);
-		}
-	}
-	await browserPage.goto(addr+pageBefore);
-	return pageList;
-}
-
-function launchChromeAndRunLighthouse(url, flags = {}, config = null) {
-  return chromeLauncher.launch().then(chrome => {
-    flags.port = chrome.port;
-    return lighthouse(url, flags, config).then(results =>
-      chrome.kill().then(() => results));
-  });
 }
 
 async function parallelScreenshots(listOfPages,dir,url,j,parallelNum)
@@ -151,6 +88,14 @@ function createScreenshots(listOfPages,dir,url)
 	}
 }
 
+function launchChromeAndRunLighthouse(url, flags = {}, config = null) {
+  return chromeLauncher.launch().then(chrome => {
+    flags.port = chrome.port;
+    return lighthouse(url, flags, config).then(results =>
+      chrome.kill().then(() => results));
+  });
+}
+
 async function parallelLighthouseReports(allPages,dir,url,j,parallelNum)
 {
 	var pagesLength = allPages.length;
@@ -188,9 +133,15 @@ async function audit()
 			url = url.slice(0,-1);
 		}
 	    var dir = process.argv[process.argv.indexOf("--dir") + 1]; //grab the next item
-	    var pageList = await getPagesInitial(url,dir).catch(console.error.bind(console));
-	    console.log(pageList);
-	    createLighthouseReports(pageList,dir,url);
+	    if (!fs.existsSync(dir)){
+	    	fs.mkdirSync(dir);
+	    	fs.mkdirSync(dir+'/images');
+	    	fs.mkdirSync(dir+'/mobileImages');
+	    	fs.mkdirSync(dir+'/lighthouse');
+	    	fs.mkdirSync(dir+'/markupValidator');
+		}
+	    var pageList = await bfsGetPages("/",url).catch(console.error.bind(console));
+		createLighthouseReports(pageList,dir,url);
 		parallelScreenshots(pageList,dir,url,0,1).catch(console.error.bind(console));
 	}
 	else
