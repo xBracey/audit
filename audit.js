@@ -8,10 +8,11 @@ const queueClass = require('./queue');
 async function bfsGetPages(firstPage,url)
 {
 	var browser = await puppeteer.launch({
+		executablePath: '/usr/bin/google-chrome'
 		args: [
         		'--no-sandbox',
             		'--disable-setuid-sandbox'
-        	]	
+		]
 	});
 	var browserPage = await browser.newPage();
 	var pageList = [];
