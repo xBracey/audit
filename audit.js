@@ -7,7 +7,12 @@ const queueClass = require('./queue');
 
 async function bfsGetPages(firstPage,url)
 {
-	var browser = await puppeteer.launch();
+	var browser = await puppeteer.launch({
+		args: [
+        		'--no-sandbox',
+            		'--disable-setuid-sandbox'
+        	]	
+	});
 	var browserPage = await browser.newPage();
 	var pageList = [];
 	// linkList=[];
