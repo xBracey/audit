@@ -31,11 +31,17 @@ async function bfsGetPages(firstPage,url)
 			// 	linkList.push({"page": page, "href":tempHref});
 			// }
 			tempHref = tempHref.split("#")[0];
+			ext = tempHref.split(".");
+			ext = ext[ext.length-1];
+
 			var newPage = tempHref.replace(url,"");
 			if ((tempHref!==newPage) && (pageList.indexOf(newPage) === -1))
 			{
-				pageQueue.enqueue(newPage);
-				pageList.push(newPage);
+				if (ext.length>4)
+				{
+					pageQueue.enqueue(newPage);
+					pageList.push(newPage);
+				}
 			}
 		}
 	}
@@ -76,14 +82,11 @@ async function createScreenshots(listOfPages,dir,url)
 	var pagesLength = listOfPages.length;
 	for (var i=0;i<pagesLength;i++)
 	{
-		if (listOfPages[i].slice(-4) !== '.pdf')
-		{
-			var pageName = listOfPages[i].replace(/\//g,'_');
-			pageName = pageName.replace(/#/g,'');
-			await takeScreenshot(page,listOfPages,i,pageName,url,dir);
-			await takeMarkupScreenshot(page,listOfPages,i,pageName,url,dir);
-			await takeMobileScreenshot(page,listOfPages,i,pageName,url,dir);
-		}
+		var pageName = listOfPages[i].replace(/\//g,'_');
+		pageName = pageName.replace(/#/g,'');
+		await takeScreenshot(page,listOfPages,i,pageName,url,dir);
+		await takeMarkupScreenshot(page,listOfPages,i,pageName,url,dir);
+		await takeMobileScreenshot(page,listOfPages,i,pageName,url,dir);
 	}
 	browser.close();
 }
