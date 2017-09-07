@@ -20,4 +20,8 @@ Another feature of the auditing tool is that in create many parallel lighthouse 
 ```--parallel <numOfInstances>```
 
 ## Results
-Results of the auditing tool can be found in the four directories of the installation directory.
+Results of the auditing tool can be found in the four directories of the directory created by the tool. The four folders are as follows:
+* __Images__ : Contains screenshots of all of the pages
+* __Lighthouse__ : Contains lighthouse reports in html of all of the pages
+* __MarkupValidator__ : Contains markup validator reports in html for all of the pages
+* __MobileImages__ : Contains mobile screenshots of all of the pages
