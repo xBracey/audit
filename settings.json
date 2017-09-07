@@ -1,0 +1,10 @@
+{
+	"loginPage": "/auth/login",
+	"userName": "admin",
+	"userNameCSS": "input[id='username']",
+	"password": "pass",
+	"passwordCSS": "input[id='password']",
+	"parallel": 5,
+	"loginButtonCSS":"input[value='Log in']",
+	"logOutPage": "/auth/logout"
+}

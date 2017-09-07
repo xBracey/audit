@@ -6,6 +6,19 @@ const flags = {};
 const queueClass = require('./queue');
 const w3cjs = require('w3cjs');
 const ReportGeneratorV2 = require('./node_modules/lighthouse/lighthouse-core/report/v2/report-generator');
+const jsonfile = require('jsonfile');
+const settingsJSON = jsonfile.readFileSync('settings.json');
+
+async function login(page,url)
+{
+	await page.goto(url+settingsJSON.loginPage);
+	await page.focus(settingsJSON.userNameCSS);
+	await page.type(settingsJSON.userName);
+	await page.focus(settingsJSON.passwordCSS);
+	await page.type(settingsJSON.password);
+	await page.click(settingsJSON.loginButtonCSS);
+	await page.waitFor(1000);
+}
 
 async function bfsGetPages(firstPage,url)
 {
@@ -16,6 +29,10 @@ async function bfsGetPages(firstPage,url)
 	var pageQueue = new queueClass.queue();
 	pageQueue.enqueue(firstPage);
 	pageList.push(firstPage);
+	if(process.argv.indexOf("--login") != -1)
+	{
+		await login(browserPage,url);
+	}
 	while (!pageQueue.isEmpty())
 	{
 		var page = pageQueue.dequeue();
@@ -28,7 +45,7 @@ async function bfsGetPages(firstPage,url)
 			var tempHref = await browserPage.evaluate((i) => {
 				return document.querySelectorAll('a')[i].href;
 			},i);
-			// if (tempHref.indexOf("page_id=535") !== -1)//For seeing links
+			// if (tempHref.indexOf("staging-cop-web") !== -1)//For seeing links
 			// {
 			// 	linkList.push({"page": page, "href":tempHref});
 			// }
@@ -37,7 +54,7 @@ async function bfsGetPages(firstPage,url)
 			ext = ext[ext.length-1];
 
 			var newPage = tempHref.replace(url,"");
-			if ((tempHref!==newPage) && (pageList.indexOf(newPage) === -1))
+			if ((tempHref!==newPage) && (pageList.indexOf(newPage) === -1) && (newPage!==settingsJSON.logOutPage) && (newPage.indexOf('delete') === -1))
 			{
 				if (ext.length>4)
 				{
@@ -80,6 +97,10 @@ async function createScreenshots(listOfPages,dir,url)
 	var browser = await puppeteer.launch();
 	var page = await browser.newPage();
 	var pagesLength = listOfPages.length;
+	if(process.argv.indexOf("--login") != -1)
+	{
+		await login(page,url);
+	}
 	for (var i=0;i<pagesLength;i++)
 	{
 		var pageName = listOfPages[i].replace(/\//g,'_');
@@ -123,17 +144,10 @@ async function parallelLighthouseReports(allPages,dir,url,j,parallelNum)
 }
 function createLighthouseReports(allPages,dir,url)
 {
-	if(process.argv.indexOf("--parallel") != -1)
-	{
-		var parallelNum = parseInt(process.argv[process.argv.indexOf("--parallel") + 1]);
-		if(!(typeof parallelNum==='number' && (parallelNum%1)===0)) {
-    		// parallelNum is not an integer
-    		parallelNum = 1;
-		}
-	}
-	else
-	{
-		var parallelNum = 1;
+	var parallelNum = settingsJSON.parallel;
+	if(!(typeof parallelNum==='number' && (parallelNum%1)===0)) {
+		// parallelNum is not an integer
+		parallelNum = 1;
 	}
 	for (var j=0;j<parallelNum;j++)
 	{
@@ -158,7 +172,7 @@ async function audit()
 	    	fs.mkdirSync(dir+'/markupValidator');
 		}
 	    var pageList = await bfsGetPages("/",url).catch(console.error.bind(console));
-		createLighthouseReports(pageList,dir,url);
+		//createLighthouseReports(pageList,dir,url);
 		createScreenshots(pageList,dir,url).catch(console.error.bind(console));
 	}
 	else

@@ -15,9 +15,19 @@ To run the auditing tool, all you need is the __URL__ of the home page of the we
 
 ```node audit.js --url <URL> --dir <Directory Name>```
 
-### Parallel Lighthouse Instances
-Another feature of the auditing tool is that in create many parallel lighthouse instances whilst auditing. To enable this use the following tag:
-```--parallel <numOfInstances>```
+### Settings
+#### Parallel lighthouse instances
+The tool produces a lighthouse report for every page that it finds. Each report takes time to produce so reports can be produced in parallel. You can change how many reports are produced in parallel in the settings.json file under the name "parallel". The default value is 5 lighthouse istances
+
+#### Login Page
+If the website you are auditing requires a login to access all of the pages, there are some settings you can change so the tool automatically logins before any operations are performed. These settings (which are found in the settings.json file) include:
+* __loginPage__ : The page where the user logins (i.e /login or /auth/login)
+* __userName__ : The value of the username/email that the user would use to login (i.e admin or admin@email.com)
+* __userNameCSS__ : A unique CSS selector that identifies the text input where the user would enter their username (i.e "input[id='username']")
+* __password__ : The value of the password that the user would use to login (i.e admin or password)
+* __passwordCSS__ : A unique CSS selector that identifies the text input where the user would enter their password (i.e "input[id='password']")
+* __loginButtonCSS__ : A unique CSS selector that identifies the button which the user would click after their username and password has been entered (i.e "input[id='login']")
+* __logOutPage__ : The page where the user logs out (i.e /logout or /auth/logout) so the program does not click any link that logs the user out
 
 ## Results
 Results of the auditing tool can be found in the four directories of the directory created by the tool. The four folders are as follows:
