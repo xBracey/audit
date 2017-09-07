@@ -6,5 +6,6 @@
 	"passwordCSS": "input[id='password']",
 	"parallel": 5,
 	"loginButtonCSS":"input[value='Log in']",
-	"logOutPage": "/auth/logout"
+	"logOutPage": "/auth/logout",
+	"linkString": "example"
 }

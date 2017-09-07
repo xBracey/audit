@@ -33,6 +33,15 @@ To include this feature, append the --login tag like in the text below:
 
 ```node audit.js --url <URL> --dir <Directory Name> --login``` 
 
+#### Find links
+If you suspect some links are redirecting the page to a different/old staging site or an old site, you can use another feature provided by this tool to find these links. Since the auditing tool checks every href in every anchor tag, any href that contains a substring of the old site's URL can be logged and saved as a JSON file.
+
+To use this feature, specify a substring of the old site's URL in the settings.json file under the name "linkString" and append the --link tag.
+
+What will be returned will be a JSON file containing an array of objects where each object represents a link. The object's page is where the link was found and the object's href is the href attribute of the link. The JSON file can be found in the directory created by the tool.
+
+To view the JSON in a nice readable format, open the following page http://chris.photobooks.com/json/default.htm and paste the generated JSON into the input.
+
 
 ## Results
 Results of the auditing tool can be found in the four directories of the directory created by the tool. The four folders are as follows:

@@ -20,12 +20,13 @@ async function login(page,url)
 	await page.waitFor(1000);
 }
 
-async function bfsGetPages(firstPage,url)
+
+async function bfsGetPages(firstPage,url,dir)
 {
 	var browser = await puppeteer.launch();
 	var browserPage = await browser.newPage();
 	var pageList = [];
-	// linkList=[];//For seeing links
+	var linkList=[];
 	var pageQueue = new queueClass.queue();
 	pageQueue.enqueue(firstPage);
 	pageList.push(firstPage);
@@ -33,6 +34,11 @@ async function bfsGetPages(firstPage,url)
 	{
 		await login(browserPage,url);
 	}
+	if(process.argv.indexOf("--link") != -1)
+	{
+		var linkBoolean = true;
+	}
+	else{var linkBoolean = false;}
 	while (!pageQueue.isEmpty())
 	{
 		var page = pageQueue.dequeue();
@@ -45,16 +51,19 @@ async function bfsGetPages(firstPage,url)
 			var tempHref = await browserPage.evaluate((i) => {
 				return document.querySelectorAll('a')[i].href;
 			},i);
-			// if (tempHref.indexOf("staging-cop-web") !== -1)//For seeing links
-			// {
-			// 	linkList.push({"page": page, "href":tempHref});
-			// }
+			if(linkBoolean)//For seeing links
+			{
+				if (tempHref.indexOf(settingsJSON.linkString) !== -1)
+				{
+					linkList.push({"page": page, "href":tempHref});
+				}
+			}
 			tempHref = tempHref.split("#")[0];
 			ext = tempHref.split(".");
 			ext = ext[ext.length-1];
 
 			var newPage = tempHref.replace(url,"");
-			if ((tempHref!==newPage) && (pageList.indexOf(newPage) === -1) && (newPage!==settingsJSON.logOutPage) && (newPage.indexOf('delete') === -1))
+			if ((tempHref!==newPage) && (pageList.indexOf(newPage) === -1) && (newPage!==settingsJSON.logOutPage))
 			{
 				if (ext.length>4)
 				{
@@ -64,7 +73,10 @@ async function bfsGetPages(firstPage,url)
 			}
 		}
 	}
-	// console.log(linkList); //For seeing links
+	if(linkBoolean)
+	{
+		jsonfile.writeFileSync(dir+'/linkList.json', linkList);
+	}
 	browser.close();
 	return pageList;
 }
@@ -171,8 +183,8 @@ async function audit()
 	    	fs.mkdirSync(dir+'/lighthouse');
 	    	fs.mkdirSync(dir+'/markupValidator');
 		}
-	    var pageList = await bfsGetPages("/",url).catch(console.error.bind(console));
-		//createLighthouseReports(pageList,dir,url);
+	    var pageList = await bfsGetPages("/",url,dir).catch(console.error.bind(console));
+		createLighthouseReports(pageList,dir,url);
 		createScreenshots(pageList,dir,url).catch(console.error.bind(console));
 	}
 	else
