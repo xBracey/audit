@@ -29,6 +29,11 @@ If the website you are auditing requires a login to access all of the pages, the
 * __loginButtonCSS__ : A unique CSS selector that identifies the button which the user would click after their username and password has been entered (i.e "input[id='login']")
 * __logOutPage__ : The page where the user logs out (i.e /logout or /auth/logout) so the program does not click any link that logs the user out
 
+To include this feature, append the --login tag like in the text below:
+
+```node audit.js --url <URL> --dir <Directory Name> --login``` 
+
+
 ## Results
 Results of the auditing tool can be found in the four directories of the directory created by the tool. The four folders are as follows:
 * __Images__ : Contains screenshots of all of the pages
