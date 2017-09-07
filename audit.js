@@ -4,13 +4,15 @@ const chromeLauncher = require('lighthouse/chrome-launcher');
 const fs = require('fs');
 const flags = {};
 const queueClass = require('./queue');
+const w3cjs = require('w3cjs');
+const ReportGeneratorV2 = require('./node_modules/lighthouse/lighthouse-core/report/v2/report-generator');
 
 async function bfsGetPages(firstPage,url)
 {
 	var browser = await puppeteer.launch();
 	var browserPage = await browser.newPage();
 	var pageList = [];
-	// linkList=[];
+	// linkList=[];//For seeing links
 	var pageQueue = new queueClass.queue();
 	pageQueue.enqueue(firstPage);
 	pageList.push(firstPage);
@@ -26,7 +28,7 @@ async function bfsGetPages(firstPage,url)
 			var tempHref = await browserPage.evaluate((i) => {
 				return document.querySelectorAll('a')[i].href;
 			},i);
-			// if (tempHref.indexOf("staging-cop-web-elb") !== -1)
+			// if (tempHref.indexOf("page_id=535") !== -1)//For seeing links
 			// {
 			// 	linkList.push({"page": page, "href":tempHref});
 			// }
@@ -45,34 +47,32 @@ async function bfsGetPages(firstPage,url)
 			}
 		}
 	}
-	// console.log(linkList);
+	// console.log(linkList); //For seeing links
 	browser.close();
 	return pageList;
 }
 
-async function takeScreenshot(page,listOfPages,i,pageName,url,dir)
+async function takeScreenshots(page,listOfPages,i,pageName,url,dir)
 {
 	await page.setViewport({width: 1920, height: 1080});
 	await page.goto(url+listOfPages[i]);
 	await page.screenshot({path: dir+'/images/'+pageName+'.png', fullPage: true});
-}
-
-async function takeMarkupScreenshot(page,listOfPages,i,pageName,url,dir)
-{
-	await page.setViewport({width: 1920, height: 1080});
-	await page.goto('https://validator.w3.org/');
-	await page.focus('#uri');
-	await page.type(url+listOfPages[i]);
-	await page.click('#validate-by-uri .submit');
-	await page.waitFor(3000);
-	await page.screenshot({path: dir+'/markupValidator/'+pageName+'.png', fullPage: true});
-}
-
-async function takeMobileScreenshot(page,listOfPages,i,pageName,url,dir)
-{
 	await page.setViewport({width: 320, height: 568, isMobile: true});
-	await page.goto(url+listOfPages[i]);
 	await page.screenshot({path: dir+'/mobileImages/'+pageName+'.png', fullPage: true});
+}
+
+async function getMarkupResults(page,listOfPages,i,pageName,url,dir)
+{
+	w3cjs.validate({
+		file: url+listOfPages[i],
+		output: 'html',
+		callback: function (err, res) {
+			fs.writeFile(dir+'/markupValidator/'+pageName+'_markup.html', res, (err) => {
+	  		if (err) throw err;
+	  			//console.log('The file has been saved!');
+			});
+		}
+	});
 }
 
 async function createScreenshots(listOfPages,dir,url)
@@ -84,14 +84,13 @@ async function createScreenshots(listOfPages,dir,url)
 	{
 		var pageName = listOfPages[i].replace(/\//g,'_');
 		pageName = pageName.replace(/#/g,'');
-		await takeScreenshot(page,listOfPages,i,pageName,url,dir);
-		await takeMarkupScreenshot(page,listOfPages,i,pageName,url,dir);
-		await takeMobileScreenshot(page,listOfPages,i,pageName,url,dir);
+		await takeScreenshots(page,listOfPages,i,pageName,url,dir);
+		await getMarkupResults(page,listOfPages,i,pageName,url,dir);
 	}
 	browser.close();
 }
 
-function launchChromeAndRunLighthouse(url, flags = {}, config = null) {
+function launchChromeAndRunLighthouse(url, config = null) {
   return chromeLauncher.launch().then(chrome => {
     flags.port = chrome.port;
     return lighthouse(url, flags, config).then(results =>
@@ -101,9 +100,10 @@ function launchChromeAndRunLighthouse(url, flags = {}, config = null) {
 
 function saveLightHouseReport(arrayNum,dir,allPages,results)
 {
-	var pageName = allPages[arrayNum].replace(/\//g,'_');	
+	var pageName = allPages[arrayNum].replace(/\//g,'_');
+	var html = new ReportGeneratorV2().generateReportHtml(results);
 	pageName = pageName.replace(/#/g,'');
-	fs.writeFile(dir+'/lighthouse/'+pageName+'_report.JSON', JSON.stringify(results), (err) => {
+	fs.writeFile(dir+'/lighthouse/'+pageName+'_report.html', html, (err) => {
 	  	if (err) throw err;
 	  	//console.log('The file has been saved!');
 	});
@@ -117,7 +117,7 @@ async function parallelLighthouseReports(allPages,dir,url,j,parallelNum)
 		var arrayNum = (i*parallelNum)+j;
 		if (arrayNum < pagesLength)
 		{
-			await launchChromeAndRunLighthouse(url+allPages[arrayNum], flags).then(results => saveLightHouseReport(arrayNum,dir,allPages,results));
+			await launchChromeAndRunLighthouse(url+allPages[arrayNum]).then(results => saveLightHouseReport(arrayNum,dir,allPages,results));
 		}
 	}
 }
