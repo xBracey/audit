@@ -30,6 +30,11 @@ async function bfsGetPages(firstPage,url,dir)
 	var pageQueue = new queueClass.queue();
 	pageQueue.enqueue(firstPage);
 	pageList.push(firstPage);
+	for (var i=0;i<settingsJSON.pages.length;i++)
+	{
+		pageQueue.enqueue(settingsJSON.pages[i]);
+		pageList.push(settingsJSON.pages[i]);
+	}
 	if(process.argv.indexOf("--login") != -1)
 	{
 		await login(browserPage,url);

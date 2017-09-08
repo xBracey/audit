@@ -4,8 +4,11 @@
 	"userNameCSS": "input[id='username']",
 	"password": "pass",
 	"passwordCSS": "input[id='password']",
-	"parallel": 5,
 	"loginButtonCSS":"input[value='Log in']",
 	"logOutPage": "/auth/logout",
-	"linkString": "example"
+	"parallel": 5,
+	"linkString": "page_id",
+	"pages": [
+		"?s=a"
+	]
 }

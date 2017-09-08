@@ -42,6 +42,8 @@ What will be returned will be a JSON file containing an array of objects where e
 
 To view the JSON in a nice readable format, open the following page http://chris.photobooks.com/json/default.htm and paste the generated JSON into the input.
 
+#### Manually add pages
+Sometimes there are  pages which can't be accessed from the home page or can't be accessed from clicking a link (For example a search page which requires the user to type a string into a text bar and hit search). These pages can be searched through as well by adding them to the pages array in the settings.json file. All pages should start with the character '/'.
 
 ## Results
 Results of the auditing tool can be found in the four directories of the directory created by the tool. The four folders are as follows:
