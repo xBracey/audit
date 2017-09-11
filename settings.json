@@ -7,8 +7,13 @@
 	"loginButtonCSS":"input[value='Log in']",
 	"logOutPage": "/auth/logout",
 	"parallel": 5,
-	"linkString": "page_id",
+	"linkString": "/studio/services",
 	"pages": [
 		"?s=a"
-	]
+	],
+	"timeout":{
+		"page" : "insights",
+		"time" : 1500
+	},
+	"pageSpeedKey" : ""
 }

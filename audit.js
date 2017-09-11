@@ -8,6 +8,7 @@ const w3cjs = require('w3cjs');
 const ReportGeneratorV2 = require('./node_modules/lighthouse/lighthouse-core/report/v2/report-generator');
 const jsonfile = require('jsonfile');
 const settingsJSON = jsonfile.readFileSync('settings.json');
+const psi = require('psi');
 
 async function login(page,url)
 {
@@ -20,7 +21,6 @@ async function login(page,url)
 	await page.waitFor(1000);
 }
 
-
 async function bfsGetPages(firstPage,url,dir)
 {
 	var browser = await puppeteer.launch();
@@ -30,11 +30,15 @@ async function bfsGetPages(firstPage,url,dir)
 	var pageQueue = new queueClass.queue();
 	pageQueue.enqueue(firstPage);
 	pageList.push(firstPage);
-	for (var i=0;i<settingsJSON.pages.length;i++)
+	if(process.argv.indexOf("--pages") != -1)
 	{
-		pageQueue.enqueue(settingsJSON.pages[i]);
-		pageList.push(settingsJSON.pages[i]);
+		for (var i=0;i<settingsJSON.pages.length;i++)
+		{
+			pageQueue.enqueue(settingsJSON.pages[i]);
+			pageList.push(settingsJSON.pages[i]);
+		}
 	}
+
 	if(process.argv.indexOf("--login") != -1)
 	{
 		await login(browserPage,url);
@@ -44,36 +48,58 @@ async function bfsGetPages(firstPage,url,dir)
 		var linkBoolean = true;
 	}
 	else{var linkBoolean = false;}
+	if(process.argv.indexOf("--timeout") != -1)
+	{
+		var timeOutBoolean = true;
+	}
+	else{var timeOutBoolean = false;}
+
+	//Start of Breadth-First Search on website
 	while (!pageQueue.isEmpty())
 	{
 		var page = pageQueue.dequeue();
 		await browserPage.goto(url+page);
+
+		if(timeOutBoolean)
+		{
+			if (page.indexOf(settingsJSON.timeout.page) !== -1)
+			{
+				await browserPage.waitFor(settingsJSON.timeout.time);
+			}
+		}
+
 		var numOfLinks = await browserPage.evaluate(() => {
 			return document.querySelectorAll('a').length;
 		});
 		for (var i=0;i<numOfLinks;i++)
 		{
-			var tempHref = await browserPage.evaluate((i) => {
+			var linkHref = await browserPage.evaluate((i) => {
 				return document.querySelectorAll('a')[i].href;
 			},i);
-			if(linkBoolean)//For seeing links
+
+			if(linkBoolean)
 			{
-				if (tempHref.indexOf(settingsJSON.linkString) !== -1)
+				if (linkHref.indexOf("/studio/") !== -1)
+				//if (linkHref.indexOf(settingsJSON.linkString) !== -1)
 				{
-					linkList.push({"page": page, "href":tempHref});
+					linkList.push({"page": page, "href":linkHref});
 				}
 			}
-			tempHref = tempHref.split("#")[0];
-			ext = tempHref.split(".");
-			ext = ext[ext.length-1];
 
-			var newPage = tempHref.replace(url,"");
-			if ((tempHref!==newPage) && (pageList.indexOf(newPage) === -1) && (newPage!==settingsJSON.logOutPage))
+			linkHref = linkHref.split("#")[0];
+			pageExtension = linkHref.split(".");
+			pageExtension = pageExtension[pageExtension.length-1];
+
+			var pageWithoutURL = linkHref.replace(url,"");
+			if ((linkHref!==pageWithoutURL) && (pageList.indexOf(pageWithoutURL) === -1) && (pageWithoutURL!==settingsJSON.logOutPage))
 			{
-				if (ext.length>4)
+				if (linkHref.indexOf("studio/services/services")=== -1)
 				{
-					pageQueue.enqueue(newPage);
-					pageList.push(newPage);
+					if (pageExtension.length>4)
+					{
+						pageQueue.enqueue(pageWithoutURL);
+						pageList.push(pageWithoutURL);
+					}
 				}
 			}
 		}
@@ -172,23 +198,58 @@ function createLighthouseReports(allPages,dir,url)
 	}
 }
 
+async function createPageSpeedReports(pageList,dir,url)
+{
+	var browser = await puppeteer.launch();
+	var page = await browser.newPage();
+	var pageSpeedArray = {};
+	for (var i=0;i<pageList.length;i++)
+	{
+		var pageSpeed = {};
+		try{
+			await psi(url+pageList[i],{key: settingsJSON.pageSpeedKey}).then(data => {
+				pageSpeed.speed = data.ruleGroups.SPEED;
+				pageSpeed.usability = data.ruleGroups.USABILITY;
+			});
+		}
+		catch(e){}
+		pageSpeedArray[pageList[i]] = pageSpeed;
+	}
+	await page.goto("http://chris.photobooks.com/json/default.htm");
+	await page.focus("#jsonInput");
+	await page.type(JSON.stringify(pageSpeedArray));
+	await page.click("#cmdRender");
+	await page.waitFor(1000);
+	await page.screenshot({path: dir+'/pageSpeedReport.png',fullPage: true});
+	browser.close();
+}
+
+function createDirectories(dir)
+{
+    if (!fs.existsSync(dir)){    
+    	fs.mkdirSync(dir);
+    	fs.mkdirSync(dir+'/images');
+    	fs.mkdirSync(dir+'/mobileImages');
+    	fs.mkdirSync(dir+'/lighthouse');
+    	fs.mkdirSync(dir+'/markupValidator');
+	}
+}
+
 async function audit()
 {
-	if((process.argv.indexOf("--url") != -1) && (process.argv.indexOf("--dir") != -1)){ //does our flag exist?
-	    var url = process.argv[process.argv.indexOf("--url") + 1]; //grab the next item
+	if((process.argv.indexOf("--url") != -1) && (process.argv.indexOf("--dir") != -1)){ 
+	    var url = process.argv[process.argv.indexOf("--url") + 1];
+	    var dir = process.argv[process.argv.indexOf("--dir") + 1];
 	    if (url.slice(-1)==="/")
 		{
 			url = url.slice(0,-1);
 		}
-	    var dir = process.argv[process.argv.indexOf("--dir") + 1]; //grab the next item
-	    if (!fs.existsSync(dir)){
-	    	fs.mkdirSync(dir);
-	    	fs.mkdirSync(dir+'/images');
-	    	fs.mkdirSync(dir+'/mobileImages');
-	    	fs.mkdirSync(dir+'/lighthouse');
-	    	fs.mkdirSync(dir+'/markupValidator');
-		}
+	    createDirectories(dir);
 	    var pageList = await bfsGetPages("/",url,dir).catch(console.error.bind(console));
+	    if(process.argv.indexOf("--pageSpeed") != -1)
+		{
+			await createPageSpeedReports(pageList,dir,url);
+		}
 		createLighthouseReports(pageList,dir,url);
 		createScreenshots(pageList,dir,url).catch(console.error.bind(console));
 	}
