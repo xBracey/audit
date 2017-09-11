@@ -37,6 +37,7 @@ To include this feature, append the --login tag like in the text below:
 If you suspect some links are redirecting the page to a different/old staging site or an old site, you can use another feature provided by this tool to find these links. Since the auditing tool checks every href in every anchor tag, any href that contains a substring of the old site's URL can be logged and saved as a JSON file.
 
 To use this feature, specify a substring of the old site's URL in the settings.json file under the name "linkString" and append the --link tag like so:
+
 ```node audit.js --url <URL> --dir <Directory Name> --link```
 
 What will be returned will be a JSON file containing an array of objects where each object represents a link. The object's page is where the link was found and the object's href is the href attribute of the link. The JSON file can be found in the directory created by the tool.
@@ -48,6 +49,7 @@ To view the JSON in a nice readable format, open the following page http://chris
 Sometimes there are  pages which can't be accessed from the home page or can't be accessed from clicking a link (For example a search page which requires the user to type a string into a text bar and hit search). These pages can be searched through as well by adding them to the pages array in the settings.json file. All pages should start with the character '/'.
 
 To include this feature, append the --pages tag like so:
+
 ```node audit.js --url <URL> --dir <Directory Name> --pages```
 
 ### Add timeout for certain pages
@@ -56,6 +58,7 @@ Some pages might need a timeout to load before they display links. For instance 
 To fix this there is an option in the settings.json file called timeout with two attributes called page and time. This option waits for x amount of milliseconds for page's containing a string s, where x equals the 'time' attribute and s equals the 'page' attribute.
 
 To include this feature, append the --timeout tag like so:
+
 ```node audit.js --url <URL> --dir <Directory Name> --timeout```
 
 ## Results
@@ -67,4 +70,5 @@ Results of the auditing tool can be found in the four directories of the directo
 
 ### Page Speed Report
 A google page speed report is also created for all of your pages. To enable this you need an api key from google which can be obtained from the following link https://developers.google.com/speed/docs/insights/v2/first-app. This key should then be copied into the settings.json file under the name 'pageSpeedKey'. To enable the page speed report use the following tag --pageSpeed like so:
+
 ```node audit.js --url <URL> --dir <Directory Name> --pageSpeed```
