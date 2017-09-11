@@ -79,8 +79,7 @@ async function bfsGetPages(firstPage,url,dir)
 
 			if(linkBoolean)
 			{
-				if (linkHref.indexOf("/studio/") !== -1)
-				//if (linkHref.indexOf(settingsJSON.linkString) !== -1)
+				if (linkHref.indexOf(settingsJSON.linkString) !== -1)
 				{
 					linkList.push({"page": page, "href":linkHref});
 				}
