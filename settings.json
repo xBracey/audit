@@ -7,7 +7,7 @@
 	"loginButtonCSS":"input[value='Log in']",
 	"logOutPage": "/auth/logout",
 	"parallel": 5,
-	"linkString": "/studio/services",
+	"linkString": "blog.komododigital.co.uk/",
 	"pages": [
 		"?s=a"
 	],
@@ -15,5 +15,9 @@
 		"page" : "insights",
 		"time" : 1500
 	},
-	"pageSpeedKey" : ""
+	"exclusions":[
+	"news/"
+	],
+	"pageSpeedKey" : "AIzaSyCziNSneIL9kyu9BxIC215ZWauhxkB6oRU",
+	"findText": "lorem ipsum"
 }

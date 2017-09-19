@@ -61,6 +61,13 @@ To include this feature, append the --timeout tag like so:
 
 ```node audit.js --url <URL> --dir <Directory Name> --timeout```
 
+### Exclusions
+To exclude pages that you do not want the auditing tool to navigate to, simply add the page to the exlusions array in the settings.json file
+
+### Find Text
+In a lot of websites, filler text such as 'Lorem Ipsum' is used to fill content in pages where the content is not known yet. You can use the setting findText to finds these pages as the setting returns an array of pages containing the text defined in the setting. This can be useful to find on what pages contain filler text. The default value for this setting is "lorem ipsum".
+
+
 ## Results
 Results of the auditing tool can be found in the four directories of the directory created by the tool. The four folders are as follows:
 * __Images__ : Contains screenshots of all of the pages

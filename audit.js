@@ -21,12 +21,24 @@ async function login(page,url)
 	await page.waitFor(1000);
 }
 
+async function loremIpsum(page)
+{
+	pageText = await page.plainText();
+	pageText = pageText.toLowerCase();
+	if (pageText.indexOf(settingsJSON.findText.toLowerCase())!== -1)
+	{
+		return true;
+	}
+	return false;
+}
+
 async function bfsGetPages(firstPage,url,dir)
 {
 	var browser = await puppeteer.launch();
 	var browserPage = await browser.newPage();
 	var pageList = [];
 	var linkList=[];
+	var loremIpsumList=[];
 	var pageQueue = new queueClass.queue();
 	pageQueue.enqueue(firstPage);
 	pageList.push(firstPage);
@@ -38,7 +50,6 @@ async function bfsGetPages(firstPage,url,dir)
 			pageList.push(settingsJSON.pages[i]);
 		}
 	}
-
 	if(process.argv.indexOf("--login") != -1)
 	{
 		await login(browserPage,url);
@@ -58,8 +69,8 @@ async function bfsGetPages(firstPage,url,dir)
 	while (!pageQueue.isEmpty())
 	{
 		var page = pageQueue.dequeue();
-		await browserPage.goto(url+page);
 
+		await browserPage.goto(url+page);
 		if(timeOutBoolean)
 		{
 			if (page.indexOf(settingsJSON.timeout.page) !== -1)
@@ -67,7 +78,11 @@ async function bfsGetPages(firstPage,url,dir)
 				await browserPage.waitFor(settingsJSON.timeout.time);
 			}
 		}
-
+		var loremBoolean = await loremIpsum(browserPage);
+		if (loremBoolean)
+		{
+			loremIpsumList.push(page);
+		}
 		var numOfLinks = await browserPage.evaluate(() => {
 			return document.querySelectorAll('a').length;
 		});
@@ -86,15 +101,24 @@ async function bfsGetPages(firstPage,url,dir)
 			}
 
 			linkHref = linkHref.split("#")[0];
-			pageExtension = linkHref.split(".");
+			var pageExtension = linkHref.split(".");
 			pageExtension = pageExtension[pageExtension.length-1];
 
-			var pageWithoutURL = linkHref.replace(url,"");
-			if ((linkHref!==pageWithoutURL) && (pageList.indexOf(pageWithoutURL) === -1) && (pageWithoutURL!==settingsJSON.logOutPage))
+			var pageWithoutURL = linkHref.replace(url+"/","");
+			if (linkHref!==pageWithoutURL)
 			{
-				if (linkHref.indexOf("studio/services/services")=== -1)
+				pageWithoutURL = "/"+pageWithoutURL;
+				if (pageList.indexOf(pageWithoutURL) === -1)
 				{
-					if (pageExtension.length>4)
+					var excludedPage = false;
+					for (j=0;j<settingsJSON.exclusions.length;j++)
+					{	
+						if (pageWithoutURL.indexOf(settingsJSON.exclusions[j]) !== -1)
+						{
+							excludedPage = true;
+						}
+					}
+					if ((pageExtension.length>4) && (!excludedPage))
 					{
 						pageQueue.enqueue(pageWithoutURL);
 						pageList.push(pageWithoutURL);
@@ -105,8 +129,28 @@ async function bfsGetPages(firstPage,url,dir)
 	}
 	if(linkBoolean)
 	{
-		jsonfile.writeFileSync(dir+'/linkList.json', linkList);
+		await preJSONScreenshot(linkList,browserPage);
+		await browserPage.screenshot({path: dir+'/linkList.png',fullPage: true});
+		fs.writeFile(dir+'/linkList.JSON', JSON.stringify(linkList), (err) => {
+	  		if (err) throw err;
+		});
+		count = {};
+		for (i=0;i<linkList.length;i++)
+		{
+			if (!count.hasOwnProperty(linkList[i].href))
+			{
+				count[linkList[i].href] == 0;
+			}
+			count[linkList[i].href] += 1;
+		}
+		fs.writeFile(dir+'/count.JSON', JSON.stringify(count), (err) => {
+	  		if (err) throw err;
+		});
 	}
+	fs.writeFile(dir+'/lorem.JSON', JSON.stringify(loremIpsumList), (err) => {
+	  	if (err) throw err;
+	});
+
 	browser.close();
 	return pageList;
 }
@@ -116,6 +160,8 @@ async function takeScreenshots(page,listOfPages,i,pageName,url,dir)
 	await page.setViewport({width: 1920, height: 1080});
 	await page.goto(url+listOfPages[i]);
 	await page.screenshot({path: dir+'/images/'+pageName+'.png', fullPage: true});
+	await page.setViewport({width: 800, height: 1280});
+	await page.screenshot({path: dir+'/smallImages/'+pageName+'.png', fullPage: true});
 	await page.setViewport({width: 320, height: 568, isMobile: true});
 	await page.screenshot({path: dir+'/mobileImages/'+pageName+'.png', fullPage: true});
 }
@@ -128,7 +174,6 @@ async function getMarkupResults(page,listOfPages,i,pageName,url,dir)
 		callback: function (err, res) {
 			fs.writeFile(dir+'/markupValidator/'+pageName+'_markup.html', res, (err) => {
 	  		if (err) throw err;
-	  			//console.log('The file has been saved!');
 			});
 		}
 	});
@@ -168,7 +213,6 @@ function saveLightHouseReport(arrayNum,dir,allPages,results)
 	pageName = pageName.replace(/#/g,'');
 	fs.writeFile(dir+'/lighthouse/'+pageName+'_report.html', html, (err) => {
 	  	if (err) throw err;
-	  	//console.log('The file has been saved!');
 	});
 }
 
@@ -196,7 +240,15 @@ function createLighthouseReports(allPages,dir,url)
 		parallelLighthouseReports(allPages,dir,url,j,parallelNum).catch(console.error.bind(console));
 	}
 }
-
+async function preJSONScreenshot(json,page)
+{
+	await page.goto("http://chris.photobooks.com/json/default.htm");
+	await page.focus("#jsonInput");
+	await page.type(JSON.stringify(json));
+	await page.click("#jsonTrunc");
+	await page.click("#cmdRender");
+	await page.waitFor(1000);
+}
 async function createPageSpeedReports(pageList,dir,url)
 {
 	var browser = await puppeteer.launch();
@@ -205,20 +257,13 @@ async function createPageSpeedReports(pageList,dir,url)
 	for (var i=0;i<pageList.length;i++)
 	{
 		var pageSpeed = {};
-		try{
-			await psi(url+pageList[i],{key: settingsJSON.pageSpeedKey}).then(data => {
-				pageSpeed.speed = data.ruleGroups.SPEED;
-				pageSpeed.usability = data.ruleGroups.USABILITY;
-			});
-		}
-		catch(e){}
+		await psi(url+pageList[i],{key: settingsJSON.pageSpeedKey}).then(data => {
+			pageSpeed.speed = data.ruleGroups.SPEED;
+			pageSpeed.usability = data.ruleGroups.USABILITY;
+		});
 		pageSpeedArray[pageList[i]] = pageSpeed;
 	}
-	await page.goto("http://chris.photobooks.com/json/default.htm");
-	await page.focus("#jsonInput");
-	await page.type(JSON.stringify(pageSpeedArray));
-	await page.click("#cmdRender");
-	await page.waitFor(1000);
+	await preJSONScreenshot(pageSpeedArray,page);
 	await page.screenshot({path: dir+'/pageSpeedReport.png',fullPage: true});
 	browser.close();
 }
@@ -229,6 +274,7 @@ function createDirectories(dir)
     	fs.mkdirSync(dir);
     	fs.mkdirSync(dir+'/images');
     	fs.mkdirSync(dir+'/mobileImages');
+    	fs.mkdirSync(dir+'/smallImages');
     	fs.mkdirSync(dir+'/lighthouse');
     	fs.mkdirSync(dir+'/markupValidator');
 	}
