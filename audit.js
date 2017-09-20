@@ -83,14 +83,17 @@ async function bfsGetPages(firstPage,url,dir)
 		{
 			loremIpsumList.push(page);
 		}
-		var numOfLinks = await browserPage.evaluate(() => {
-			return document.querySelectorAll('a').length;
+		var links = await browserPage.evaluate(() => {
+			anchorArray = document.querySelectorAll('a');
+			var links=[];
+			for(var i=0;i<anchorArray.length;i++){
+			   links.push(anchorArray[i].href);
+			}
+			return links;
 		});
-		for (var i=0;i<numOfLinks;i++)
+		for (var i=0;i<links.length;i++)
 		{
-			var linkHref = await browserPage.evaluate((i) => {
-				return document.querySelectorAll('a')[i].href;
-			},i);
+			var linkHref = links[i];
 
 			if(linkBoolean)
 			{
@@ -272,16 +275,17 @@ function createDirectories(dir)
 {
     if (!fs.existsSync(dir)){    
     	fs.mkdirSync(dir);
-    	fs.mkdirSync(dir+'/images');
-    	fs.mkdirSync(dir+'/mobileImages');
-    	fs.mkdirSync(dir+'/smallImages');
+    	//fs.mkdirSync(dir+'/images');
+    	//fs.mkdirSync(dir+'/mobileImages');
+    	//fs.mkdirSync(dir+'/smallImages');
     	fs.mkdirSync(dir+'/lighthouse');
-    	fs.mkdirSync(dir+'/markupValidator');
+    	//fs.mkdirSync(dir+'/markupValidator');
 	}
 }
 
 async function audit()
 {
+	console.time("bfsTimer");
 	if((process.argv.indexOf("--url") != -1) && (process.argv.indexOf("--dir") != -1)){ 
 	    var url = process.argv[process.argv.indexOf("--url") + 1];
 	    var dir = process.argv[process.argv.indexOf("--dir") + 1];
@@ -295,8 +299,9 @@ async function audit()
 		{
 			await createPageSpeedReports(pageList,dir,url);
 		}
-		createLighthouseReports(pageList,dir,url);
-		createScreenshots(pageList,dir,url).catch(console.error.bind(console));
+		console.timeEnd("bfsTimer")
+		//createLighthouseReports(pageList,dir,url);
+		//createScreenshots(pageList,dir,url).catch(console.error.bind(console));
 	}
 	else
 	{
