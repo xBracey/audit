@@ -5,9 +5,8 @@
 	"password": "pass",
 	"passwordCSS": "input[id='password']",
 	"loginButtonCSS":"input[value='Log in']",
-	"logOutPage": "/auth/logout",
 	"parallel": 5,
-	"linkString": "blog.komododigital.co.uk/",
+	"linkString": "example.co.uk/",
 	"pages": [
 		"?s=a"
 	],
@@ -18,6 +17,6 @@
 	"exclusions":[
 	"news/"
 	],
-	"pageSpeedKey" : "AIzaSyCziNSneIL9kyu9BxIC215ZWauhxkB6oRU",
+	"pageSpeedKey" : "",
 	"findText": "lorem ipsum"
 }
