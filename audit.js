@@ -275,11 +275,11 @@ function createDirectories(dir)
 {
     if (!fs.existsSync(dir)){    
     	fs.mkdirSync(dir);
-    	//fs.mkdirSync(dir+'/images');
-    	//fs.mkdirSync(dir+'/mobileImages');
-    	//fs.mkdirSync(dir+'/smallImages');
+    	fs.mkdirSync(dir+'/images');
+    	fs.mkdirSync(dir+'/mobileImages');
+    	fs.mkdirSync(dir+'/smallImages');
     	fs.mkdirSync(dir+'/lighthouse');
-    	//fs.mkdirSync(dir+'/markupValidator');
+    	fs.mkdirSync(dir+'/markupValidator');
 	}
 }
 
@@ -300,8 +300,8 @@ async function audit()
 			await createPageSpeedReports(pageList,dir,url);
 		}
 		console.timeEnd("bfsTimer")
-		//createLighthouseReports(pageList,dir,url);
-		//createScreenshots(pageList,dir,url).catch(console.error.bind(console));
+		createLighthouseReports(pageList,dir,url);
+		createScreenshots(pageList,dir,url).catch(console.error.bind(console));
 	}
 	else
 	{
