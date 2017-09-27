@@ -27,7 +27,8 @@ If the website you are auditing requires a login to access all of the pages, the
 * __password__ : The value of the password that the user would use to login (i.e admin or password)
 * __passwordCSS__ : A unique CSS selector that identifies the text input where the user would enter their password (i.e "input[id='password']")
 * __loginButtonCSS__ : A unique CSS selector that identifies the button which the user would click after their username and password has been entered (i.e "input[id='login']")
-* __logOutPage__ : The page where the user logs out (i.e /logout or /auth/logout) so the program does not click any link that logs the user out
+
+To exclude a link to the logout page, add the logout page to the list of exclusions in the settings.josn file.
 
 To include this feature, append the --login tag like in the text below:
 
